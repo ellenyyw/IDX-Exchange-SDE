@@ -36,9 +36,10 @@ router.get("/", async(req, res) => {
 
         if (req.query.limit !== undefined) {
             const input = validateQueryParam("Limit", req.query.limit);
-            if (input.error || input.value === 0 || input.value > 20) {
+            if (input.error || input.value === 0 || input.value > 100) {
                 return res.status(400).json({
-                    error: "Limit must be an integer between 1-20"
+                    status: "error",
+                    error: "Limit must be an integer between 1-100"
                 });
             }
 
@@ -49,6 +50,7 @@ router.get("/", async(req, res) => {
             const input = validateQueryParam("Offset", req.query.offset);
             if (input.error) {
                 return res.status(400).json({
+                    status: "error",
                     error: input.error
                 });
             }
@@ -63,12 +65,14 @@ router.get("/", async(req, res) => {
             const city = req.query.city.trim();
             if (city === "") {
                 return res.status(400).json({
+                    status: "error",
                     error: "City cannot be left blank"
                 });
             }
 
             if (/^\d+$/.test(city)) {
                 return res.status(400).json({
+                    status: "error",
                     error: "City must be a valid city name"
                 });
             }
@@ -83,6 +87,7 @@ router.get("/", async(req, res) => {
             const zipcode = req.query.zipcode.trim();
             if (!/^\d{5}$/.test(zipcode)) {
                 return res.status(400).json({
+                    status: "error",
                     error: "Zipcode must be exactly 5 digits"
                 });
             }
@@ -98,6 +103,7 @@ router.get("/", async(req, res) => {
             const input = validateQueryParam("MinPrice", req.query.minPrice);
             if (input.error) {
                 return res.status(400).json({
+                    status: "error",
                     error: input.error
                 });
             }
@@ -111,6 +117,7 @@ router.get("/", async(req, res) => {
             const input = validateQueryParam("MaxPrice", req.query.maxPrice);
             if (input.error) {
                 return res.status(400).json({
+                    status: "error",
                     error: input.error
                 });
             }
@@ -122,6 +129,7 @@ router.get("/", async(req, res) => {
 
         if (minPrice !== undefined && maxPrice !== undefined && minPrice > maxPrice) {
             return res.status(400).json({
+                status: "error",
                 error: "MinPrice cannot be greater than maxPrice"
             });
         }
@@ -130,6 +138,7 @@ router.get("/", async(req, res) => {
             const input = validateQueryParam("Beds", req.query.beds);
             if (input.error) {
                 return res.status(400).json({
+                    status: "error",
                     error: input.error
                 });
             }
@@ -148,6 +157,7 @@ router.get("/", async(req, res) => {
 
             if (bathsInput === "") {
                 return res.status(400).json({
+                    status: "error",
                     error: "Baths cannot be left blank"
                 });
             }
@@ -156,6 +166,7 @@ router.get("/", async(req, res) => {
 
             if (!Number.isFinite(baths) || baths < 0) {
                 return res.status(400).json({
+                    status: "error",
                     error: " Baths must be a non-negative number"
                 });
             }
