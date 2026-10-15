@@ -25,6 +25,22 @@ app.get("/api/health",async(req, res) => {
   }
 });
 
+const responseLogger = (req, res, next) => {
+  const start = Date.now();
+  const timestamp = new Date().toISOString();
+
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    console.log(
+            `${req.method} ${req.originalUrl} [${timestamp}] ${duration}ms`
+        );
+  });
+
+  next();
+}
+
+app.use(responseLogger);
+
 app.use("/api/properties", propertiesRouter);
 
 app.listen(port, () => {

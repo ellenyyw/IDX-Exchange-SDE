@@ -9,27 +9,40 @@ function validateQueryParam(filter, value) {
     }
 
     if (value.trim() === "") {
-        return { error: `${filter} cannot be left blank` };
+        return { status: "error", error: `${filter} cannot be left blank` };
     }
 
     const number = Number(value);
 
     if (!Number.isFinite(number)) {
-        return { error: `${filter} must be a number` };
+        return { status: "error", error: `${filter} must be a number` };
     }
     
     if (!Number.isInteger(number)) {
-        return { error: `${filter} must be an integer` };
+        return { status: "error", error: `${filter} must be an integer` };
     }
 
     if (number < 0) {
-        return { error: `${filter} must be a non-negative number` };
+        return { status: "error", error: `${filter} must be a non-negative number` };
     }
 
     return { value: number }
 }
 
-router.get("/", async(req, res) => {
+const validateListingId = (req, res, next) => {
+    const id = req.params.id;
+
+    if (!/^[0-9]{9,10}$/.test(id)) {
+        return res.status(400).json({
+            status: "error", 
+            error: "Incorrect property id format"
+        });
+    }
+
+    next();
+};
+
+router.get("/", async (req, res) => {
     try {
         let limit = 20;
         let offset = 0;
@@ -182,14 +195,18 @@ router.get("/", async(req, res) => {
         }
 
         // find total count
-        const countSql = "SELECT COUNT(*) AS total FROM rets_property" + whereClause;
-        const [totalItems] = await pool.query(countSql, values);
+        const [totalItems] = await pool.query(
+            "SELECT COUNT(*) AS total FROM rets_property" + whereClause,
+            values
+        );
         const total = totalItems[0].total;
 
         // find result
-        const sql = "SELECT * FROM rets_property" + whereClause + " LIMIT ? OFFSET ?";
         const dataValues = [...values, limit, offset];
-        const [items] = await pool.query(sql, dataValues);
+        const [items] = await pool.query(
+            "SELECT * FROM rets_property" + whereClause + " LIMIT ? OFFSET ?",
+            dataValues
+        );
 
         res.json({
             total: total,
@@ -197,10 +214,75 @@ router.get("/", async(req, res) => {
             offset: offset,
             results: items
         });
+
     } catch (error) {
         console.error(error);
         res.status(500).json({
-            message: "Internal server error"
+            status: "error",
+            database: "disconnected"
+        });
+    }
+})
+
+router.get("/:id/openhouses", validateListingId, async (req, res) => {
+    try {
+        const id = req.params.id;
+
+        const [item] = await pool.query(
+            "SELECT L_ListingID FROM rets_property WHERE L_ListingID = ?",
+            [id]
+        );
+
+        if (item.length == 0) {
+            return res.status(404).json({
+                status: "error",
+                message: "Property not found"
+            });
+        }
+
+        const [events] = await pool.query(
+            `SELECT * FROM rets_openhouse 
+            WHERE L_ListingID = ? 
+            ORDER BY OpenHouseDate, OH_StartTime`,
+            [id]
+        );
+
+        return res.json(events);
+    
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            status: "error",
+            database: "disconnected"
+        });
+    }
+})
+
+router.get("/:id", validateListingId, async (req, res) => {
+    try {
+        const id = req.params.id;
+
+        const sql = "SELECT * FROM rets_property WHERE L_ListingID = ?"
+
+        const [item] = await pool.query(
+            "SELECT * FROM rets_property WHERE L_ListingID = ?",
+            [id]
+        );
+
+        if (item.length === 0) {
+            return res.status(404).json({
+                status: "error",
+                message: "Property not found"
+            });
+        }
+
+        return res.json(item);
+    
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            status: "error",
+            database: "disconnected"
         });
     }
 })
