@@ -43,7 +43,7 @@ export default function PropertyCard( {property} ) {
           > No image available</div>
         )}
         <CardContent>
-          <Typography>
+          <Typography sx={{ fontWeight: 'bold' }}>
             {property.L_SystemPrice == null ? "Price unavailable"
             : Number(property.L_SystemPrice).toLocaleString("en-US", {
                 style: "currency",
