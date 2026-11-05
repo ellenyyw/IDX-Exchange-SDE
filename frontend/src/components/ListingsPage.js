@@ -5,20 +5,33 @@ import PropertyFilters from "./PropertyFilters"
 import Grid from "@mui/material/Grid";
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+import Pagination from '@mui/material/Pagination';
+import Stack from '@mui/material/Stack';
 
 export default function ListingsPage() {
     const [properties, setProperties] = useState([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage] = useState(20);
+    const [activeFilters, setActiveFilters] = useState({});
+    const totalPages = Math.ceil(total / itemsPerPage);
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [currentPage, itemsPerPage, activeFilters]);
 
     const fetchData = async () => {
+        setLoading(true);
+        setError(null);
+
         try {
-            const data = await getProperty();
+            const data = await getProperty({
+                ...activeFilters,
+                limit: itemsPerPage,
+                offset: (currentPage - 1) * itemsPerPage,
+            });
             setProperties(data.results);
             setTotal(data.total);
         } catch (error) {
@@ -29,18 +42,13 @@ export default function ListingsPage() {
     }
 
     const handleSearch = async (filters) => {
-        setLoading(true);
-        setError(null);
+        setActiveFilters({ ...filters });
+        setCurrentPage(1);
+    };
 
-        try {
-            const data = await getProperty(filters);
-            setProperties(data.results);
-            setTotal(data.total);
-        } catch (error) {
-            setError(error.message);
-        } finally {
-            setLoading(false);
-        }
+    const handlePageChange = async (event, page) => {
+        setCurrentPage(page);
+        window.scrollTo(0, 0);
     };
 
     return (
@@ -48,8 +56,6 @@ export default function ListingsPage() {
             <h1>Property Listings</h1>
 
             <PropertyFilters onSearch={handleSearch} />
-
-            <p>Showing {properties.length} of {total} properties</p>
 
             {loading ? (
                 <Box
@@ -96,14 +102,37 @@ export default function ListingsPage() {
                     </Typography>
                 </Box>
             ) : (
-                <Grid container spacing={2}>
-                    {properties.map((property) => (
-                        <Grid key={property.id} size={3}>
-                            <PropertyCard property={property} />
-                        </Grid>
-                    ))}
-                </Grid>
+                <>
+                    <Typography sx={{ fontSize: 18, mb: 2, color: '#4C4C4C' }}>
+                        Showing <strong> 
+                            {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, total)}
+                        </strong> of <strong>
+                            {total}
+                        </strong> properties
+                    </Typography>
+
+                    <Grid container spacing={2}>
+                        {properties.map((property) => (
+                            <Grid key={property.id} size={3}>
+                                <PropertyCard property={property} />
+                            </Grid>
+                        ))}
+                    </Grid>
+                </>
             )}
+
+            {!loading && !error && totalPages > 1 && (
+                <Stack sx={{ mt: 5, alignItems: "center" }}>
+                    <Pagination 
+                        count={totalPages}
+                        page={currentPage}
+                        onChange={handlePageChange}
+                        variant="outlined" shape="rounded" size="large" color="primary"
+                        sx={{"& .MuiPaginationItem-page.Mui-selected": { fontWeight: 900 }}}
+                    />
+                </Stack>
+            )}
+
         </div>
     );
 }
