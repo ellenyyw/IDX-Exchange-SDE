@@ -1,47 +1,21 @@
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
-import CardMedia from '@mui/material/CardMedia';
 import Typography from '@mui/material/Typography';
 import CardActionArea from '@mui/material/CardActionArea';
-import { useState } from "react";
-
-function getFirstPhoto(photos) {
-  try {
-    const jsonArray = JSON.parse(photos);
-
-    if (!Array.isArray(jsonArray)) return null;
-
-    return jsonArray[0] ?? null;
-  } catch (error) {
-    return null;
-  }
-}
+import { Link } from "react-router";
+import PropertyImageCarousel from './PropertyImageCarousel';
 
 export default function PropertyCard( {property} ) {
-  const photo = getFirstPhoto(property.L_Photos);
-  const [imageFailed, setImageFailed] = useState(false);
+  const detailPagePath = `/property/${property.L_ListingID}`;
 
   return (
     <Card sx={{ maxWidth: 345 }}>
-      <CardActionArea>
-        {photo && !imageFailed ? (
-          <CardMedia
-            component="img"
-            height="140"
-            image={photo}
-            alt={"Property image unavailable"}
-            onError={() => setImageFailed(true)}
-          />
-        ) : (
-          <div style={{
-              height: 140,
-              display: "grid",
-              placeItems: "center",
-              background: "grey",
-              color: "white"
-            }}
-          > No image available</div>
-        )}
+      <PropertyImageCarousel
+        key={property.L_ListingID}
+        photosJson={property.L_Photos}
+        detailPagePath={detailPagePath}
+      />
+      <CardActionArea component={Link} to={detailPagePath}>
         <CardContent>
           <Typography sx={{ fontWeight: 'bold' }}>
             {property.L_SystemPrice == null ? "Price unavailable"

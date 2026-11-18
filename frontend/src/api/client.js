@@ -18,3 +18,15 @@ export async function getPropertyId(id) {
 
     return response.json();
 }
+
+export async function getOpenHouses(id) {
+    const response = await fetch(
+        `/api/properties/${encodeURIComponent(id)}/openhouses`
+    );
+
+    if (!response.ok) {
+        throw new Error("Unable to load open houses");
+    }
+
+    return response.json();
+}
